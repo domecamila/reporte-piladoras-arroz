@@ -1,0 +1,48 @@
+
+name: Actualizar reporte de piladoras
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 */2 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  generar-reporte:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Generar Excel
+        run: python piladoras_arroz.py
+
+      - name: Publicar Excel
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ARCHIVO=$(find . -name "Reporte_Piladoras_Arroz.xlsx" -type f | head -n 1)
+
+          if [ -z "$ARCHIVO" ]; then
+            echo "No se encontró el Excel generado"
+            exit 1
+          fi
+
+          if ! gh release view reporte-actual >/dev/null 2>&1; then
+            gh release create reporte-actual \
+              --title "Reporte actualizado de piladoras" \
+              --notes "Reporte generado automáticamente"
+          fi
+
+          gh release upload reporte-actual "$ARCHIVO" --clobber
