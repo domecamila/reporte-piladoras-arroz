@@ -1,10 +1,12 @@
 
+
 name: Actualizar reporte de piladoras
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 */0.25 * * *"
+    - cron: "*/10 * * * *"
+
 
 permissions:
   contents: write
